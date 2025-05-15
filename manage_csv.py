@@ -18,23 +18,36 @@ class data_entry:
         self.author = author
         self.category = category
 
-def create_data_entry_list(filename):
+def create_data_entry_list(filename, reduced=False):
     '''
     create and return list of data_entry objects based on csv file with name <filename>.
 
-    the file is expected to have the following columns:
+    by default, the file is expected to have the following columns:
     [row_num], id, Title, Summary, Author, Link, Publish Date, Update Date, Primary Category, Category
+
+    if reduced is set to True, the file is expected to have the following columns:
+    [row_num], id, title, summary, category
     '''
 
     file = open(filename, encoding="utf-8", newline='')
     reader = csv.reader(file)
-    atts = {   # map attributes used for data_entry to their indices in each csv row
-        "id": 1,
-        "title": 2,
-        "summary": 3,
-        "author": 4,
-        "category": 8
-    }
+    if (reduced):
+        atts = {    # map attributes used for data_entry to their indices in each csv row
+            "id": 1,
+            "title": 2,
+            "summary": 3,
+            "author": 4,
+            "category": 5
+        }
+    else:
+        atts = {   
+            "id": 1,
+            "title": 2,
+            "summary": 3,
+            "author": 4,
+            "category": 8
+        }
+
     result = []
     for row in reader:
         curr_entry = data_entry(row[atts["id"]], row[atts["title"]], row[atts["summary"]], row[atts["author"]], row[atts["category"]])

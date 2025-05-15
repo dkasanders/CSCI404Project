@@ -12,7 +12,7 @@ sets into the files <out_train> and <out_dev>.
 
 if __name__ == "__main__":
     if (len(sys.argv) != 5):
-        print("usage: split_data.py in out_train out_dev percent_train percent_dev")
+        print("usage: split_data.py in out_train out_dev percent_train")
         exit(1)
     input_filename = sys.argv[1]
     train_filename = sys.argv[2]
