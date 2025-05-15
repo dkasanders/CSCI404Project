@@ -4,14 +4,14 @@ class data_entry:
     '''
     ATTRIBUTES
     
-    id: int
+    id: str
     title: str
     summary: str
     author: str
     category: str
     '''
 
-    def __init__(self, id: int, title: str, summary: str, author: str, category: str):
+    def __init__(self, id: str, title: str, summary: str, author: str, category: str):
         self.id = id
         self.title = title
         self.summary = summary
@@ -23,7 +23,7 @@ def create_data_entry_list(filename):
     create and return list of data_entry objects based on csv file with name <filename>.
 
     the file is expected to have the following columns:
-    id, Title, Summary, Author, Link, Publish Date, Update Date, Primary Category, Category
+    [row_num], id, Title, Summary, Author, Link, Publish Date, Update Date, Primary Category, Category
     '''
 
     file = open(filename, encoding="utf-8", newline='')
