@@ -18,7 +18,7 @@ class data_entry:
         self.author = author
         self.category = category
 
-def create_data_entry_list(filename, reduced=False):
+def create_data_entry_list(filename, reduced=False, strip_category=False):
     '''
     create and return list of data_entry objects based on csv file with name <filename>.
 
@@ -51,6 +51,8 @@ def create_data_entry_list(filename, reduced=False):
     result = []
     for row in reader:
         curr_entry = data_entry(row[atts["id"]], row[atts["title"]], row[atts["summary"]], row[atts["author"]], row[atts["category"]])
+        if strip_category:
+            curr_entry.category = curr_entry.category.split(".")[0]
         result.append(curr_entry)
     file.close()
     return result[1:]
@@ -75,6 +77,8 @@ def create_csv_from_entries(entry_list: list, output_file_name: str):
         row_number += 1
     output_file.close()
 
-if __name__ == "__main__":
-    lst = create_data_entry_list('data.csv')
-    create_csv_from_entries(lst, "out.csv")
+
+
+if __name__ == "__main__":  # for testing/debugging
+    lst = create_data_entry_list('dev.csv', reduced=True, strip_category=True)
+    print(lst[1].category)
