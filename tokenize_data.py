@@ -16,7 +16,7 @@ def create_category_map(entry_list):
         curr_label += 1
     return result
 
-def tokenize(entry_list, category_map):
+def tokenize(entry_list):
     '''
     convert data_entry list into list of tuples
     (tokens, category).
@@ -24,6 +24,7 @@ def tokenize(entry_list, category_map):
     tokens is a list of token strings and category is
     an integer.
     '''
+    category_map = create_category_map(entry_list)
     result = []
     for entry in entry_list:
         tokenized_title = word_tokenize(entry.title)
@@ -38,7 +39,7 @@ def tokenize(entry_list, category_map):
 if __name__ == "__main__":
     entry_list = manage_csv.create_data_entry_list("dev.csv", reduced=True, strip_category=True)
     cat_map = create_category_map(entry_list)
-    tokenized = tokenize(entry_list, cat_map)
+    tokenized = tokenize(entry_list)
     for i in range(10):
         print(f"ENTRY {i}")
         print(tokenized[i][0])
