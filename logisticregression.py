@@ -7,15 +7,10 @@ class LogisticRegression(torch.nn.Module):
     def __init__(self, C, D):
 
         super(LogisticRegression, self).__init__()
-        self.linears = nn.ModuleList()
-        self.activation = nn.Sigmoid()
+        self.linear = nn.Linear(C, D)
 
     def forward(self, x):
-        x = self.activation(x @ self.linears[0].weight.T + self.linears[0].bias)
-
-        softmax = torch.nn.Softmax(dim=0)
-        y_pred = softmax(x)
-        return y_pred
+       return self.linear(x)
 
     
 
