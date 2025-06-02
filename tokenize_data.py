@@ -16,6 +16,19 @@ def create_category_map(entry_list):
         curr_label += 1
     return result
 
+'''
+Converts entry_list into a list of (text, category_id) pairs
+'''
+def raw_text_and_label(entry_list):
+    category_map = create_category_map(entry_list)
+    result = []
+    for entry in entry_list:
+        full_text = entry.title + "!!DIV!!" + entry.summary
+        label = category_map[entry.category]
+        result.append((full_text, label))
+    return result, category_map
+
+
 def tokenize(entry_list):
     '''
     convert data_entry list into list of tuples

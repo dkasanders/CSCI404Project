@@ -13,7 +13,7 @@ from logisticregression import LogisticRegression
 import manage_csv
 import gensim
 import tokenize_data
-
+from bertopic import BERTopic
 
 """
 Where model is a torch nn
@@ -61,6 +61,9 @@ BATCH_SIZE = 1
 train_entries =  manage_csv.create_data_entry_list("train.csv", reduced=True, strip_category=True)
 dev_entries = manage_csv.create_data_entry_list("dev.csv", reduced=True, strip_category=True)
 
+
+
+#Word2vec embedding creation
 def create_dataset(entries, model):
     result = []
     tokenized = tokenize_data.tokenize(entries)
@@ -76,15 +79,45 @@ def create_dataset(entries, model):
     return result
 
 #Corpus and word2vec model
-tokenized_train = tokenize_data.tokenize(train_entries)
-corpus = [tokens for tokens, _ in tokenized_train]
-w2v_model = gensim.models.Word2Vec(corpus, min_count=1, vector_size=64, window=15)
+#tokenized_train = tokenize_data.tokenize(train_entries)
+#corpus = [tokens for tokens, _ in tokenized_train]
+#w2v_model = gensim.models.Word2Vec(corpus, min_count=1, vector_size=64, window=15)
 
-training = create_dataset(train_entries, w2v_model)
-development = create_dataset(dev_entries, w2v_model)
+#BERTopic embeddings
+def create_dataset_BERT(entries, topic_model):
+    result = []
+    print(vars(entries[0]))
+    docs = [e.title + "!!DIV!!" + e.summary for e in entries]
+    _, probs = topic_model.transform(docs)
+    for prob, entry in zip(probs, entries):
+        vec = torch.tensor(prob, dtype=torch.float32)
+        label = torch.tensor(int(entry.category), dtype=torch.long)
+        result.append((vec, label))
+    return result
+
+
+train_text_label_pairs, category_map = tokenize_data.raw_text_and_label(train_entries)
+dev_test_label_pairs, _ = tokenize_data.raw_text_and_label(dev_entries)
+
+docs_train = [text for text, _ in train_text_label_pairs]
+labels_train = [label for _, label in train_text_label_pairs]
+
+docs_dev = [text for text, _ in dev_test_label_pairs]
+labels_dev = [label for _, label in dev_test_label_pairs]
+
+
+bertopic_model = BERTopic.load("trained_model")
+#topics_train, probs_train = bertopic_model.fit_transform(docs_train, y=labels_train)
+#bertopic_model.save("trained_model")
+
+topics_train, probs_train = bertopic_model.transform(docs_train)
+topics_dev, probs_dev = bertopic_model.transform(docs_dev)
+
+training = create_dataset_BERT(train_entries, bertopic_model)
+development = create_dataset_BERT(dev_entries, bertopic_model)
 
 #model definition
-input_dim = 64
+input_dim = len(training[0][0])
 output_dim = len(set(e.category for e in train_entries))
 model = LogisticRegression(input_dim, output_dim)
 optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE) 
