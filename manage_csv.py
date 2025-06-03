@@ -1,5 +1,21 @@
 import csv
 
+redir = {
+    'cond-mat': 'physics',
+    'astro-ph': 'physics',
+    'nlin': 'physics',
+    'quant-ph': 'physics',
+    'hep-th': 'physics',
+    'nucl-ex': 'physics',
+    'gr-qc': 'physics',
+    'math-ph': 'physics',
+    'nucl-th': 'physics',
+    'comp-gas': 'physics',
+    'hep-lat': 'physics',
+    'hep-ex': 'physics',
+    'hep-ph': 'physics'
+}
+
 class data_entry:
     '''
     ATTRIBUTES
@@ -53,6 +69,8 @@ def create_data_entry_list(filename, reduced=False, strip_category=False):
         curr_entry = data_entry(row[atts["id"]], row[atts["title"]], row[atts["summary"]], row[atts["author"]], row[atts["category"]])
         if strip_category:
             curr_entry.category = curr_entry.category.split(".")[0]
+            if curr_entry.category in redir:
+                curr_entry.category = redir[curr_entry.category]
         result.append(curr_entry)
     file.close()
     return result[1:]
