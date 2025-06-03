@@ -16,6 +16,7 @@ import tokenize_data
 from bertopic import BERTopic
 from collections import defaultdict
 from sklearn.metrics import precision_score, recall_score, f1_score
+import csv
 
 """
 This takes the entries and constructs a map that maps the index to its categorial value
@@ -121,9 +122,15 @@ def create_dataset(entries, model):
     return result
 
 #Corpus and word2vec model
-#tokenized_train = tokenize_data.tokenize(train_entries)
-#corpus = [tokens for tokens, _ in tokenized_train]
-#w2v_model = gensim.models.Word2Vec(corpus, min_count=1, vector_size=64, window=15)
+tokenized_train = tokenize_data.tokenize(train_entries)
+corpus = [tokens for tokens, _ in tokenized_train]
+w2v_model = gensim.models.Word2Vec(corpus, min_count=1, vector_size=64, window=15)
+
+training = create_dataset(train_entries, w2v_model)
+development = create_dataset(dev_entries, w2v_model)
+
+torch.save(training, 'w2v_training.pt')
+torch.save(development, 'w2v_development.pt')
 
 #Simple baseline model that just guesses the highest probability topic for each embedding
 #Bertopic constructs embeddings where each index is the probability of that class.
@@ -134,7 +141,6 @@ def baseline_bertopic_guess(embedding):
 #BERTopic embeddings
 def create_dataset_BERT(entries, topic_model):
     result = []
-    print(vars(entries[0]))
     docs = [e.title + "!!DIV!!" + e.summary for e in entries]
     _, probs = topic_model.transform(docs)
     for prob, entry in zip(probs, entries):
@@ -147,6 +153,8 @@ def create_dataset_BERT(entries, topic_model):
 train_text_label_pairs, category_map = tokenize_data.raw_text_and_label(train_entries)
 dev_test_label_pairs, _ = tokenize_data.raw_text_and_label(dev_entries)
 
+
+
 docs_train = [text for text, _ in train_text_label_pairs]
 labels_train = [label for _, label in train_text_label_pairs]
 
@@ -155,39 +163,38 @@ labels_dev = [label for _, label in dev_test_label_pairs]
 
 
 
-bertopic_model = BERTopic(calculate_probabilities=True)
-topics_train, probs_train = bertopic_model.fit_transform(docs_train, y=labels_train)
-bertopic_model.save("trained_model")
+#bertopic_model = BERTopic.load("trained_model")
+#topics_train, probs_train = bertopic_model.fit_transform(docs_train, y=labels_train)
+#bertopic_model.save("trained_model")
 
-#topics_train, probs_train = bertopic_model.transform(docs_train, calculate_probabilities=True)
-topics_dev, probs_dev = bertopic_model.transform(docs_dev)
+#topics_train, probs_train = bertopic_model.transform(docs_train)
+#topics_dev, probs_dev = bertopic_model.transform(docs_dev)
 
 training = create_dataset_BERT(train_entries, bertopic_model)
 development = create_dataset_BERT(dev_entries, bertopic_model)
 
-
+'''
 training = []
-for prob,label in zip(probs_train, labels_train):
+for prob,topic in zip(probs_train, topics_train):
     x = torch.tensor(prob, dtype=torch.float32)
-    y = torch.tensor(int(label), dtype=torch.long)
+    y = torch.tensor(int(topic), dtype=torch.long)
     training.append((x, y))
 
 development = []
-for prob, label in zip(probs_dev, labels_dev):
+for prob, topic in zip(probs_dev, topics_dev):
     x = torch.tensor(prob, dtype=torch.float32)
-    
-    y = torch.tensor(int(label), dtype=torch.long)
-    
+    y = torch.tensor(int(topic), dtype=torch.long)
     development.append((x, y))
+'''
 
-torch.save(training, "training_set_BERT.pt")
-torch.save(development, "development_set_BERT.pt")
+#torch.save(training, "training_set_BERT.pt")
+#torch.save(development, "development_set_BERT.pt")
 
 training = torch.load("training_set_BERT.pt")
 development = torch.load("development_set_BERT.pt")
 
 index_to_category = build_category_map(train_entries)
-
+print(index_to_category.keys())
 
 #model definition
 
@@ -222,16 +229,23 @@ y_true = []
 y_pred = []
 
 for x, y in development:
-    print(x)
-    pred = torch.argmax(x).item()
+    print(x.shape)
+    pred = int(torch.argmax(x))
    
-    true = y
+    true = int(y)
+
+    if pred == -1 or true == -1:
+        num_total += 1
+        continue
+
     y_pred.append(pred)
     y_true.append(true)
-
+    
     if pred == true:
-        print(f"this happened! pred is {pred}")
         num_correct += 1
+    else:
+        confusion_tracker[true][pred] += 1
+        incorrect_count[true] += 1
     num_total += 1
 
 #print(y_true)
@@ -243,6 +257,23 @@ accuracy = num_correct / num_total
 f1 = f1_score(y_true, y_pred, average='micro')
 
 print(f"Loss: {total_loss:.4f}, Acc: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}")
+
+with open('bert_incorrect_counts.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['True Category', 'Mislabeled Count'])
+    for true_label, count in sorted(incorrect_count.items()):
+        label_str = index_to_category[true_label]
+        writer.writerow([label_str, count])
+
+with open('bert_confusion_breakdown.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['True Category', 'Predicted As', 'Count'])
+    for true_label in sorted(confusion_tracker):
+        true_label_str = index_to_category[true_label]
+        for pred_label, count in sorted(confusion_tracker[true_label].items()):
+            pred_label_str = index_to_category[pred_label]
+            writer.writerow([true_label_str, pred_label_str, count])
+
 
 print("Incorrect count per true category:")
 for true_label, count in sorted(incorrect_count.items()):
