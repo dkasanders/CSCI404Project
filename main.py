@@ -170,8 +170,8 @@ labels_dev = [label for _, label in dev_test_label_pairs]
 #topics_train, probs_train = bertopic_model.transform(docs_train)
 #topics_dev, probs_dev = bertopic_model.transform(docs_dev)
 
-training = create_dataset_BERT(train_entries, bertopic_model)
-development = create_dataset_BERT(dev_entries, bertopic_model)
+#training = create_dataset_BERT(train_entries, bertopic_model)
+#development = create_dataset_BERT(dev_entries, bertopic_model)
 
 '''
 training = []
@@ -209,7 +209,7 @@ model = LogisticRegression(input_dim, output_dim)
 optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE) 
 criterion = torch.nn.CrossEntropyLoss(reduction='mean')
 
-
+'''
 loss_fn = nn.CrossEntropyLoss()
 
 total_loss = 0.0
@@ -288,7 +288,7 @@ for true_label in sorted(confusion_tracker):
         pred_label_str = index_to_category[pred_label]
         print(f"    Predicted as {pred_label_str}: {count} time(s)")
 
-
+'''
 
 
 
