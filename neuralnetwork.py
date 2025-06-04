@@ -17,7 +17,7 @@ activation_function: Non-linear activation function, either 'relu', 'tanh', or '
 """
 
 class DeepNeuralNet(torch.nn.Module):
-    def __init__(self, C, L, D, activation_function, optimizer):
+    def __init__(self, C, L, D, activation_function):
         """
         In the constructor we instantiate our weights and assign them to
         member variables.
@@ -34,7 +34,8 @@ class DeepNeuralNet(torch.nn.Module):
         self.linears = nn.ModuleList()
         self.activation = activation_functions[activation_function]
 
-
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.to(self.device)
         if(L == '0x0'):
             self.linears.append(nn.Linear(D, C))
         else:
@@ -62,11 +63,9 @@ class DeepNeuralNet(torch.nn.Module):
         """
         # y = softmax(wTx + b)
 
+        
 
-        for i in range(len(self.linears) - 1):
-            x = self.activation(x @ self.linears[i].weight.T + self.linears[i].bias)
+        for i in range(len(self.linears)):
+            x = self.activation(self.linears[i](x))
 
-        softmax = torch.nn.Softmax(dim=0)
-        y_pred = softmax((x @ self.linears[len(self.linears) - 1].weight.T) + self.linears[len(self.linears) - 1].bias)
-
-        return y_pred
+        return x

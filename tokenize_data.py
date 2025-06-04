@@ -56,3 +56,5 @@ if __name__ == "__main__":
     for i in range(10):
         print(f"ENTRY {i}")
         print(tokenized[i][0])
+        
+    print(word_tokenize("The cat jumps!"))
